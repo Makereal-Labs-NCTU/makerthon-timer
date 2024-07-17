@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html><head>
+	<title>交大創客松倒數計時</title>
+	<meta charset="UTF-8" />
+	<script type="module">
+		// configurations for the timer
+		const startTime = Date.parse("2024-07-20T13:00:00+08:00");
+		const endTime = Date.parse("2024-07-21T13:00:00+08:00");
+		// const startTime = Date.parse("2024-07-17T17:33:30+08:00");
+		// const endTime = Date.parse("2024-07-17T17:38:00+08:00");
+
+		// some important elements
+		const timeArea = document.querySelector("#time-area");
+		const timeText = document.querySelector("#time-text");
+		const time = document.querySelector("#time");
+		const beeper = document.querySelector("#beeper");
+
+		// functions
+		const dateToMingGuo = (date) => `${date.getFullYear() - 1911}/`
+			+ `${date.getMonth() + 1}`.padStart(2, '0') + '/'
+			+ `${date.getDate()}`.padStart(2, '0') + ' '
+			+ `${date.getHours()}`.padStart(2, '0') + ':'
+			+ `${date.getMinutes()}`.padStart(2, '0') + ':' 
+			+ `${date.getSeconds()}`.padStart(2, '0');
+		const dateToTime = (date) => `${date.getHours()}`.padStart(2, '0') + ':'
+			+ `${date.getMinutes()}`.padStart(2, '0') + ':' 
+			+ `${date.getSeconds()}`.padStart(2, '0');
+		const beep = () => {
+			beeper.currentTime = 0;
+			beeper.play();
+		};
+		const beepbeep = () => {
+			beep();
+			setTimeout(beep, 125);
+		};
+		const positiveTimeout = (fn, t) => { // do nothing if the time is negative
+			if(t < 0)
+				return undefined;
+			return setTimeout(fn, t);
+		}
+		
+		// manager of the timer's status - use timerStatus.switchTo() to switch between them
+		const timerStatus = {
+			beforeStarting: {
+				enter() {
+					timeArea.classList.add("before-starting");
+					timeText.innerHTML = `即將於 ${dateToMingGuo(new Date(startTime))} 開始。現在時間：`;
+					this.interval = setInterval(() => {
+						time.innerText = dateToMingGuo(new Date());
+					});
+				},
+				exit() {
+					clearInterval(this.interval);
+					this.interval = null;
+					timeArea.classList.remove("before-starting");
+					timeText.innerHTML = time.innerHTML = "";
+				},
+				interval: null
+			},
+			aboutToStart: {
+				enter() {
+					timeArea.classList.add("about-to-start");
+					timeText.innerText = `開始倒數`;
+					this.interval = setInterval(() => {
+						time.innerText = `${Math.floor((startTime - Date.now()) / 1000)}`;
+					});
+				},
+				exit() {
+					timeArea.classList.remove("about-to-start");
+					clearInterval(this.interval);
+					this.interval = null;
+					timeText.innerText = "";
+					time.innerText = "";
+				},
+				interval: null
+			},
+			countingDown: {
+				enter() {
+					timeArea.classList.add("counting-down");
+					timeText.innerText = "剩餘時間";
+
+					this.interval = setInterval(() => {
+						let now = Date.now();
+						let delta = endTime - now;
+						time.innerText = `${Math.floor(delta / 1000 / 3600)} 小時 `
+							+ `${Math.floor(delta / 1000 % 3600 / 60)} 分 `
+							+ `${Math.floor(delta / 1000 % 60)}.${Math.floor(delta % 1000).toString().padStart(3, 0)} 秒`;
+					});
+				},
+				exit() {
+					clearInterval(this.interval);
+					this.interval = null;
+					time.innerHTML = "";
+
+					timeArea.classList.remove("counting-down");
+					timeText.innerText = "";
+				},
+				interval: null
+			},
+			aboutToStop: {
+				enter() {
+					timeArea.classList.add("about-to-stop");
+					timeText.innerText = `截止倒數`;
+
+					this.interval = setInterval(() => {
+						time.innerText = `${Math.floor((endTime - Date.now()) / 1000)}`;
+					});
+				},
+				exit() {
+					clearInterval(this.interval);
+					this.interval = null;
+					time.innerText = "";
+
+					timeArea.classList.remove("about-to-stop");
+					timeText.innerText = "";
+				},
+				interval: null
+			},
+			stopped: {
+				enter() {
+					timeArea.classList.add("stopped");
+					timeText.innerText = `時間到！`;
+					time.innerText = "Time's Up!";
+				},
+				exit() {
+					timeArea.classList.remove("stopped");
+					timeText.innerText = "";
+					time.innerText = "";
+				}
+			},
+			currentStatus: "",
+			switchTo(x) {
+				if(!this[x])
+					throw "Error! Not an existing status!";
+				this[this.currentStatus]?.exit();
+				this[x].enter();
+				this.currentStatus = x;
+			}
+		};
+
+		// determine what to schedule based on the current and start/end time 
+		let now = Date.now();
+		let timeBeforeStart = startTime - now;
+		let timeBeforeEnd = endTime - now;
+		switch(true) {
+			case timeBeforeStart - 11000 > 0:
+				timerStatus.switchTo("beforeStarting");
+			case timeBeforeStart > 0:
+				setTimeout(() => timerStatus.switchTo("aboutToStart"), timeBeforeStart - 11000); // countdown for 10 secs
+			case timeBeforeEnd - 11000 > 0:
+				setTimeout(() => timerStatus.switchTo("countingDown"), timeBeforeStart);
+			case timeBeforeEnd > 0:
+				setTimeout(() => timerStatus.switchTo("aboutToStop"), timeBeforeEnd - 11000); // countdown for 10 secs
+			default:
+				setTimeout(() => timerStatus.switchTo("stopped"), timeBeforeEnd);
+		}
+		const beepWhileCountingDown = (gap = 1000, duration = 11000) => {
+			beep();
+			let interval = setInterval(beep, gap);
+			setTimeout(() => clearInterval(interval), duration - gap / 2);
+		}
+
+		positiveTimeout(beepbeep, timeBeforeStart - 5 * 60 * 1000);
+		positiveTimeout(beepWhileCountingDown, timeBeforeStart - 11000);
+		positiveTimeout(beepbeep, timeBeforeStart);
+		positiveTimeout(beepbeep, timeBeforeEnd - 12 * 60 * 60 * 1000);
+		positiveTimeout(beepbeep, timeBeforeEnd - 6 * 60 * 60 * 1000);
+		positiveTimeout(beepbeep, timeBeforeEnd - 3 * 60 * 60 * 1000);
+		positiveTimeout(beepbeep, timeBeforeEnd - 1 * 60 * 60 * 1000);
+		positiveTimeout(beepbeep, timeBeforeEnd - 30 * 60 * 1000);
+		positiveTimeout(beepbeep, timeBeforeEnd - 15 * 60 * 1000);
+		positiveTimeout(beepbeep, timeBeforeEnd - 3 * 60 * 1000);
+		positiveTimeout(beepWhileCountingDown, timeBeforeEnd - 11000);
+		positiveTimeout(beepbeep, timeBeforeEnd);
+
+		// click body twice to enter/leave fullscreen
+		let lastClickTime = 0;
+		document.body.addEventListener("click", e => {
+			if(Date.now() - lastClickTime < 500) {
+				lastClickTime = 0;
+				if(document.fullscreenElement)
+					document.exitFullscreen();
+				else
+					document.body.requestFullscreen();
+			} else {
+				lastClickTime = Date.now();
+			}
+		});
+
+
+	</script>
+	<style>
+		@import "https://iosevka-webfonts.github.io/iosevka/Iosevka.css";
+			/* ref: https://github.com/iosevka-webfonts/iosevka?tab=readme-ov-file */
+
+		@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&display=swap');
+			/* ref: https://fonts.google.com/selection/embed */
+
+		html {
+			--theme-bg-color: #201F4F; /* dark blue */
+			--theme-text-color: white; 
+			--theme-highlight-color: #EFCE07; /* yellow */
+			--theme-warning-color: var(--theme-highlight-color);
+		}
+
+		body {
+			background-color: var(--theme-bg-color);
+			color: var(--theme-text-color);
+			margin: 0;
+			height: 100vh;
+			width: 100vw;
+
+			overflow: clip;
+
+			font-family: "Sarasa Mono TC", "Iosevka", "Iosevka Web", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+		}
+
+		* {
+			box-sizing: border-box;
+			&::backdrop {
+				background: inherit;
+			}
+		}
+
+		#time-area {
+			height: 100%;
+			width: 100%;
+			text-align: center;
+
+			display: flex;
+			flex-flow: column nowrap;
+			justify-content: center;
+
+			user-select: none;
+		}
+
+		#time-text {
+			font-size: 3em;
+		}
+
+		#time {
+			font-size: 4em;
+			line-height: 2;
+		}
+
+		@keyframes fade-in-while-zooming {
+			from {
+				opacity: 0.00;
+				scale: 10;
+			}
+
+			50% {
+				opacity: 1.00;
+				scale: 1;
+			}
+
+			to {
+				opacity: 1.00;
+				scale: 1;
+			}
+		}
+
+		#time-area:is(.about-to-start, .about-to-stop) #time {
+			animation: 1s fade-in-while-zooming infinite;
+		}
+
+		#time-area:is(.about-to-start, .about-to-stop, .stopped) #time {
+			color: var(--theme-warning-color);
+			font-weight: bold;
+		}
+	</style>
+</head><body>
+	<div id="time-area">
+		<div id="time-text"></div>
+		<div id="time"></div>
+		<audio id="beeper" src="beep.mp3" preload></audio>
+	</div>
+</body></html>
