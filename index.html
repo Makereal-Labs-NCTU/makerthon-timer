@@ -9,11 +9,13 @@
 		// const startTime = Date.parse("2024-07-17T17:33:30+08:00");
 		// const endTime = Date.parse("2024-07-17T17:38:00+08:00");
 
-		// some important elements
+		// some important elements and values
 		const timeArea = document.querySelector("#time-area");
+		const timeProgressBar = document.querySelector("#time-progress-bar");
 		const timeText = document.querySelector("#time-text");
 		const time = document.querySelector("#time");
 		const beeper = document.querySelector("#beeper");
+		const duration = endTime - startTime;
 
 		// functions
 		const dateToMingGuo = (date) => `${date.getFullYear() - 1911}/`
@@ -85,6 +87,8 @@
 						time.innerText = `${Math.floor(delta / 1000 / 3600)} 小時 `
 							+ `${Math.floor(delta / 1000 % 3600 / 60)} 分 `
 							+ `${Math.floor(delta / 1000 % 60)}.${Math.floor(delta % 1000).toString().padStart(3, 0)} 秒`;
+
+						timeProgressBar.style["width"] = `${100 * delta / duration}%`;
 					});
 				},
 				exit() {
@@ -163,6 +167,7 @@
 		positiveTimeout(beepbeep, timeBeforeStart - 5 * 60 * 1000);
 		positiveTimeout(beepWhileCountingDown, timeBeforeStart - 11000);
 		positiveTimeout(beepbeep, timeBeforeStart);
+		positiveTimeout(beepbeep, timeBeforeEnd - 16 * 60 * 60 * 1000);
 		positiveTimeout(beepbeep, timeBeforeEnd - 12 * 60 * 60 * 1000);
 		positiveTimeout(beepbeep, timeBeforeEnd - 6 * 60 * 60 * 1000);
 		positiveTimeout(beepbeep, timeBeforeEnd - 3 * 60 * 60 * 1000);
@@ -234,6 +239,16 @@
 			user-select: none;
 		}
 
+		#time-progress-bar {
+			display: none;
+		}
+
+		#time-area.counting-down #time-progress-bar {
+			display: block;
+			background-color: var(--theme-highlight-color);
+			height: 0.35em;
+		}
+
 		#time-text {
 			font-size: 3em;
 		}
@@ -268,11 +283,18 @@
 			color: var(--theme-warning-color);
 			font-weight: bold;
 		}
+
+		.time-area-filling {
+			flex: 1;
+		}
 	</style>
 </head><body>
 	<div id="time-area">
+		<div id="time-progress-bar"></div>
+		<div class="time-area-filling"></div>
 		<div id="time-text"></div>
 		<div id="time"></div>
+		<div class="time-area-filling"></div>
 		<audio id="beeper" src="beep.mp3" preload></audio>
 	</div>
 </body></html>
