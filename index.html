@@ -4,8 +4,8 @@
 	<meta charset="UTF-8" />
 	<script type="module">
 		// configurations for the timer
-		const startTime = Date.parse("2024-07-20T13:00:00+08:00");
-		const endTime = Date.parse("2024-07-21T13:00:00+08:00");
+		const startTime = Date.parse("2025-01-03T20:00:00+08:00");
+		const endTime = Date.parse("2025-01-05T13:00:00+08:00");
 		// const startTime = Date.parse("2024-07-17T17:33:30+08:00");
 		// const endTime = Date.parse("2024-07-17T17:38:00+08:00");
 
@@ -164,18 +164,31 @@
 			setTimeout(() => clearInterval(interval), duration - gap / 2);
 		}
 
+		const secs = 1000;
+		const mins = 60 * secs;
+		const hrs = 60 * mins;
+
+		// alert 5 mins before start
 		positiveTimeout(beepbeep, timeBeforeStart - 5 * 60 * 1000);
+		// count down 10 seconds before start
 		positiveTimeout(beepWhileCountingDown, timeBeforeStart - 11000);
+		// beep at start 
 		positiveTimeout(beepbeep, timeBeforeStart);
-		positiveTimeout(beepbeep, timeBeforeEnd - 16 * 60 * 60 * 1000);
-		positiveTimeout(beepbeep, timeBeforeEnd - 12 * 60 * 60 * 1000);
-		positiveTimeout(beepbeep, timeBeforeEnd - 6 * 60 * 60 * 1000);
-		positiveTimeout(beepbeep, timeBeforeEnd - 3 * 60 * 60 * 1000);
-		positiveTimeout(beepbeep, timeBeforeEnd - 1 * 60 * 60 * 1000);
-		positiveTimeout(beepbeep, timeBeforeEnd - 30 * 60 * 1000);
-		positiveTimeout(beepbeep, timeBeforeEnd - 15 * 60 * 1000);
-		positiveTimeout(beepbeep, timeBeforeEnd - 3 * 60 * 1000);
+		// alert at 2024-01-04 00:00:00 am (time to sleep UwU)
+		positiveTimeout(beepbeep, timeBeforeStart + 4 * hrs);
+		// alert 12, 6, 3, 2 and 1 hours, and 30, 15, 3 minutes before end
+		positiveTimeout(beepbeep, timeBeforeEnd - 12 * hrs);
+		positiveTimeout(beepbeep, timeBeforeEnd - 12 * hrs);
+		positiveTimeout(beepbeep, timeBeforeEnd - 6 * hrs);
+		positiveTimeout(beepbeep, timeBeforeEnd - 3 * hrs);
+		positiveTimeout(beepbeep, timeBeforeEnd - 2 * hrs);
+		positiveTimeout(beepbeep, timeBeforeEnd - 1 * hrs);
+		positiveTimeout(beepbeep, timeBeforeEnd - 30 * mins);
+		positiveTimeout(beepbeep, timeBeforeEnd - 15 * mins);
+		positiveTimeout(beepbeep, timeBeforeEnd - 3 * mins);
+		// count down 10 seconds before end
 		positiveTimeout(beepWhileCountingDown, timeBeforeEnd - 11000);
+		// alert at end
 		positiveTimeout(beepbeep, timeBeforeEnd);
 
 		// click body twice to enter/leave fullscreen
