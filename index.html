@@ -15,6 +15,7 @@
 		const timeText = document.querySelector("#time-text");
 		const time = document.querySelector("#time");
 		const beeper = document.querySelector("#beeper");
+		const beeperVolume = document.querySelector("#beeper-volume");
 		const duration = endTime - startTime;
 
 		// functions
@@ -205,7 +206,39 @@
 			}
 		});
 
+		// Button to unmute/mute the beeper.
+		// Sync it with the beeper's real volume (determined by both muted and volume)
+		// by calling this function.
+		const updateBeeperVolumeBtn = () => {
+			let realVolume = beeper.muted ? 0 : beeper.volume;
+			beeperVolume.textContent = realVolume == 0 ? `🔇` 
+				: realVolume == 1 ? `🔊`
+				: `🔉`;
+			beeperVolume.dataset.volume = realVolume;
+		};
+		updateBeeperVolumeBtn(); // for init
 
+		// Sync the beeper's real volume with beeperVolume.
+		// If it's not changed thru the button, mark it "unclicked"
+		// as the user may not have been noticed this
+		let lastVolChangeIsByUser = false;
+		beeper.addEventListener('volumechange', () => {
+			if(!lastVolChangeIsByUser)
+				beeperVolume.dataset.clicked = false;
+			lastVolChangeIsByUser = false;
+			updateBeeperVolumeBtn();
+		});
+		beeperVolume.addEventListener('click', () => {
+			let realVolume = beeper.muted ? 0 : beeper.volume;
+			if(realVolume != 1) {
+				beeper.muted = false;
+				beeper.volume = 1;
+			} else {
+				beeper.muted = true;
+			}
+			beeperVolume.dataset.clicked = true;
+			lastVolChangeIsByUser = true;
+		});
 	</script>
 	<style>
 		@import "https://iosevka-webfonts.github.io/iosevka/Iosevka.css";
@@ -300,6 +333,34 @@
 		.time-area-filling {
 			flex: 1;
 		}
+
+		#beeper-volume {
+			background: 0;
+
+			font-size: 2em;
+
+			position: absolute;
+			right: .25em;
+			bottom: .25em;
+
+			padding: 0.25em;
+			border: none;
+			border-radius: 50%;
+			aspect-ratio: 1;
+
+			cursor: pointer;
+
+			transition: opacity .25s, background-color .25s;
+		}
+
+		#beeper-volume:not(:hover):not([data-clicked="false"][data-volume="0"]) {
+			transition: opacity .25s 2s;
+			opacity: 0;
+		}
+
+		#beeper-volume[data-clicked="false"][data-volume="0"] {
+			background-color: var(--theme-warning-color);
+		}
 	</style>
 </head><body>
 	<div id="time-area">
@@ -308,6 +369,7 @@
 		<div id="time-text"></div>
 		<div id="time"></div>
 		<div class="time-area-filling"></div>
-		<audio id="beeper" src="beep.mp3" preload></audio>
+		<button id="beeper-volume" data-clicked="false"></button>
+		<audio id="beeper" src="./beep.mp3" preload></audio>
 	</div>
 </body></html>
